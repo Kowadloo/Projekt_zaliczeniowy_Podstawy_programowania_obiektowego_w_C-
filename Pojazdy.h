@@ -1,6 +1,8 @@
 #pragma once
+#include <iostream>
 #include <string>
 #include "DanePodrozy.h"
+
 using namespace std;
 
 class Pojazd {
@@ -22,17 +24,20 @@ public:
     double getStawkaDobowa() const;
     bool isWypozyczony() const;
 
-    void setStawkaDobowa(double stawka);
     void setWypozyczony(bool status);
 
     virtual double obliczKosztPaliwa(const Trasa& trasa, const Cennik& cennik) const = 0;
+    virtual double obliczKosztPaliwaMax(const Trasa& trasa, const Cennik& cennik) const;
     virtual string getTypNapedu() const = 0;
-    virtual void wyswietl() const;
+    virtual void wypiszSzczegoly(ostream& os) const;
+
+    bool operator==(const Pojazd& inny) const;
+    friend ostream& operator<<(ostream& os, const Pojazd& pojazd);
 };
 
 class PojazdSpalinowy : public Pojazd {
 private:
-    string rodzajPaliwa; // Benzyna lub DDisel
+    string rodzajPaliwa;
     double spalanieMiasto;
     double spalanieTrasa;
     double spalanieAutostrada;
@@ -45,7 +50,7 @@ public:
 
     double obliczKosztPaliwa(const Trasa& trasa, const Cennik& cennik) const override;
     string getTypNapedu() const override;
-    void wyswietl() const override;
+    void wypiszSzczegoly(ostream& os) const override;
 };
 
 class PojazdElektryczny : public Pojazd {
@@ -55,6 +60,8 @@ private:
     double zuzycieAutostrada;
     double pojemnoscBaterii;
 
+    double obliczZuzyteKwh(const Trasa& trasa) const;
+
 public:
     PojazdElektryczny();
     PojazdElektryczny(int id, const string& marka, const string& model, double stawkaDobowa,
@@ -62,6 +69,7 @@ public:
                       double zuzycieAutostrada, double pojemnoscBaterii);
 
     double obliczKosztPaliwa(const Trasa& trasa, const Cennik& cennik) const override;
+    double obliczKosztPaliwaMax(const Trasa& trasa, const Cennik& cennik) const override;
     string getTypNapedu() const override;
-    void wyswietl() const override;
+    void wypiszSzczegoly(ostream& os) const override;
 };

@@ -11,5 +11,8 @@ Wypozyczalnia.h / Wypozyczalnia.cpp - zarządzanie flotą oraz wyszukiwanie najt
 main.cpp - interfejs tekstowy.
 
 
-
-
+Dodanie zdjęc pojazdów 
+Dodac w klasie Trasa metode liczenia trasy 
+Dodanie walidacji i wyjątków 
+Dodanie czytania i zapisywania floty do pliku txt. 
+kolory dla czytelności 
