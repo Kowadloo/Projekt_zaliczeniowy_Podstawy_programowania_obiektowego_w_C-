@@ -1,8 +1,14 @@
 #pragma once
 #include <iostream>
 #include <string>
-
 using namespace std;
+
+enum class ProfilTrasy {
+    Miasto = 1,
+    Mieszana = 2,
+    Autostrada = 3
+};
+
 
 class Cennik {
 private:
@@ -23,6 +29,8 @@ public:
     void ustawCeny(double benzyna, double diesel, double pradMin, double pradMax);
 };
 
+
+
 class Trasa {
 private:
     double dystansMiasto;
@@ -33,13 +41,15 @@ private:
 public:
     Trasa();
     Trasa(double miasto, double trasa, double autostrada, int dni);
-    Trasa(double calkowityDystans, int profilTrasy, int dni);
+    Trasa(double calkowityDystans, ProfilTrasy profil, int dni);
 
     double getDystansMiasto() const;
     double getDystansTrasa() const;
     double getDystansAutostrada() const;
     double getDystansCalkowity() const;
     int getLiczbaDni() const;
-
-    friend ostream& operator<<(ostream& os, const Trasa& trasa);
 };
+
+
+
+ostream& operator<<(ostream& os, const Trasa& trasa);

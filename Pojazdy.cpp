@@ -2,6 +2,11 @@
 
 using namespace std;
 
+
+
+
+
+
 Pojazd::Pojazd()
     : id(0), marka("Nieznana"), model("Nieznany"), stawkaDobowa(100.0), wypozyczony(false) {}
 
@@ -15,13 +20,9 @@ double Pojazd::getStawkaDobowa() const { return stawkaDobowa; }
 bool Pojazd::isWypozyczony() const { return wypozyczony; }
 void Pojazd::setWypozyczony(bool status) { wypozyczony = status; }
 
-double Pojazd::obliczKosztPaliwaMax(const Trasa& trasa, const Cennik& cennik) const {
-    return obliczKosztPaliwa(trasa, cennik);
-}
-
 void Pojazd::wypiszSzczegoly(ostream& os) const {
     os << "[ID: " << id << "] " << marka << " " << model
-       << " | " << getTypNapedu()
+       << " | " << getOpisNapedu()
        << " | " << stawkaDobowa << " PLN/doba"
        << " | " << (wypozyczony ? "WYPOZYCZONY" : "DOSTEPNY");
 }
@@ -44,17 +45,32 @@ PojazdSpalinowy::PojazdSpalinowy(int id, const string& marka, const string& mode
     : Pojazd(id, marka, model, stawkaDobowa), rodzajPaliwa(rodzajPaliwa),
       spalanieMiasto(spalanieMiasto), spalanieTrasa(spalanieTrasa), spalanieAutostrada(spalanieAutostrada) {}
 
-double PojazdSpalinowy::obliczKosztPaliwa(const Trasa& trasa, const Cennik& cennik) const {
+KosztEnergii PojazdSpalinowy::obliczKosztEnergii(const Trasa& trasa, const Cennik& cennik) const {
     double litry = (trasa.getDystansMiasto() / 100.0) * spalanieMiasto
                  + (trasa.getDystansTrasa() / 100.0) * spalanieTrasa
                  + (trasa.getDystansAutostrada() / 100.0) * spalanieAutostrada;
     double cena = (rodzajPaliwa == "Diesel") ? cennik.getCenaDiesla() : cennik.getCenaBenzyny();
-    return litry * cena;
+    double koszt = litry * cena;
+    return {koszt, koszt};
 }
 
-string PojazdSpalinowy::getTypNapedu() const {
+string PojazdSpalinowy::getOpisNapedu() const {
     return "Spalinowy (" + rodzajPaliwa + ")";
 }
+
+
+
+TypNapedu PojazdSpalinowy::getTypNapedu() const {
+    return TypNapedu::Spalinowy;
+}
+
+string PojazdSpalinowy::zapiszDoLinii() const {
+    return "S " + to_string(id) + " " + marka + " " + model + " " + to_string(stawkaDobowa) + " "
+         + (wypozyczony ? "1" : "0") + " " + rodzajPaliwa + " "
+         + to_string(spalanieMiasto) + " " + to_string(spalanieTrasa) + " " + to_string(spalanieAutostrada);
+}
+
+
 
 void PojazdSpalinowy::wypiszSzczegoly(ostream& os) const {
     Pojazd::wypiszSzczegoly(os);
@@ -70,23 +86,35 @@ PojazdElektryczny::PojazdElektryczny(int id, const string& marka, const string& 
     : Pojazd(id, marka, model, stawkaDobowa), zuzycieMiasto(zuzycieMiasto),
       zuzycieTrasa(zuzycieTrasa), zuzycieAutostrada(zuzycieAutostrada), pojemnoscBaterii(pojemnoscBaterii) {}
 
+
+
 double PojazdElektryczny::obliczZuzyteKwh(const Trasa& trasa) const {
     return ((trasa.getDystansMiasto() / 100.0) * zuzycieMiasto)
          + ((trasa.getDystansTrasa() / 100.0) * zuzycieTrasa)
          + ((trasa.getDystansAutostrada() / 100.0) * zuzycieAutostrada);
 }
 
-double PojazdElektryczny::obliczKosztPaliwa(const Trasa& trasa, const Cennik& cennik) const {
-    return obliczZuzyteKwh(trasa) * cennik.getCenaPraduMin();
+KosztEnergii PojazdElektryczny::obliczKosztEnergii(const Trasa& trasa, const Cennik& cennik) const {
+    double kwh = obliczZuzyteKwh(trasa);
+    return {kwh * cennik.getCenaPraduMin(), kwh * cennik.getCenaPraduMax()};
 }
 
-double PojazdElektryczny::obliczKosztPaliwaMax(const Trasa& trasa, const Cennik& cennik) const {
-    return obliczZuzyteKwh(trasa) * cennik.getCenaPraduMax();
-}
-
-string PojazdElektryczny::getTypNapedu() const {
+string PojazdElektryczny::getOpisNapedu() const {
     return "Elektryczny (EV)";
 }
+
+TypNapedu PojazdElektryczny::getTypNapedu() const {
+    return TypNapedu::Elektryczny;
+}
+
+string PojazdElektryczny::zapiszDoLinii() const {
+    return "E " + to_string(id) + " " + marka + " " + model + " " + to_string(stawkaDobowa) + " "
+         + (wypozyczony ? "1" : "0") + " "
+         + to_string(zuzycieMiasto) + " " + to_string(zuzycieTrasa) + " " + to_string(zuzycieAutostrada) + " "
+         + to_string(pojemnoscBaterii);
+}
+
+
 
 void PojazdElektryczny::wypiszSzczegoly(ostream& os) const {
     Pojazd::wypiszSzczegoly(os);

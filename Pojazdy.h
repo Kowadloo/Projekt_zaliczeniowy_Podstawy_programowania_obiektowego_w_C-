@@ -5,6 +5,20 @@
 
 using namespace std;
 
+
+
+
+enum class TypNapedu {
+    Wszystkie = 0,
+    Spalinowy = 1,
+    Elektryczny = 2
+};
+
+struct KosztEnergii {
+    double min;
+    double max;
+};
+
 class Pojazd {
 protected:
     int id;
@@ -26,14 +40,16 @@ public:
 
     void setWypozyczony(bool status);
 
-    virtual double obliczKosztPaliwa(const Trasa& trasa, const Cennik& cennik) const = 0;
-    virtual double obliczKosztPaliwaMax(const Trasa& trasa, const Cennik& cennik) const;
-    virtual string getTypNapedu() const = 0;
+    virtual KosztEnergii obliczKosztEnergii(const Trasa& trasa, const Cennik& cennik) const = 0;
+    virtual string getOpisNapedu() const = 0;
+    virtual TypNapedu getTypNapedu() const = 0;
+    virtual string zapiszDoLinii() const = 0;
     virtual void wypiszSzczegoly(ostream& os) const;
 
     bool operator==(const Pojazd& inny) const;
-    friend ostream& operator<<(ostream& os, const Pojazd& pojazd);
 };
+
+ostream& operator<<(ostream& os, const Pojazd& pojazd);
 
 class PojazdSpalinowy : public Pojazd {
 private:
@@ -48,8 +64,10 @@ public:
                     const string& rodzajPaliwa, double spalanieMiasto,
                     double spalanieTrasa, double spalanieAutostrada);
 
-    double obliczKosztPaliwa(const Trasa& trasa, const Cennik& cennik) const override;
-    string getTypNapedu() const override;
+    KosztEnergii obliczKosztEnergii(const Trasa& trasa, const Cennik& cennik) const override;
+    string getOpisNapedu() const override;
+    TypNapedu getTypNapedu() const override;
+    string zapiszDoLinii() const override;
     void wypiszSzczegoly(ostream& os) const override;
 };
 
@@ -68,8 +86,9 @@ public:
                       double zuzycieMiasto, double zuzycieTrasa,
                       double zuzycieAutostrada, double pojemnoscBaterii);
 
-    double obliczKosztPaliwa(const Trasa& trasa, const Cennik& cennik) const override;
-    double obliczKosztPaliwaMax(const Trasa& trasa, const Cennik& cennik) const override;
-    string getTypNapedu() const override;
+    KosztEnergii obliczKosztEnergii(const Trasa& trasa, const Cennik& cennik) const override;
+    string getOpisNapedu() const override;
+    TypNapedu getTypNapedu() const override;
+    string zapiszDoLinii() const override;
     void wypiszSzczegoly(ostream& os) const override;
 };
