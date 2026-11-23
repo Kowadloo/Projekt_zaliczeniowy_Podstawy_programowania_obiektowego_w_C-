@@ -1,10 +1,1 @@
-kolory dla czytelności 
-Dodanie zdjęc pojazdów 
-Dodac metode obliczania Czasu Przejazdu
-Dodac walidacje danych i wyjatki
-Dodac info o czasie ładowania dla pojazdów elektrycznych 
-Dodac plik cennik zamiast z kodu czytanie 
-przeciążenia 
-Opcjonalnie zmienic wyswietlWolneId(), aby szukalo pierwszej wolnej luki  5 zamiast 7 jak się coś usuwa 
-Dodac mozliwosc anulowania czegoś co się robi i powrotu do menu po wpisaniu 'q'
-Zabezpieczenia przy wpisaniu spacji albo liter zamiast cyfr itp. 
+uzupelnic readme oraz diagram klas 

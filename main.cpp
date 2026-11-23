@@ -1,208 +1,185 @@
 #include <iostream>
 #include <string>
+#include <stdexcept>
 #include "Wypozyczalnia.h"
 #include "DanePodrozy.h"
 #include "Pojazdy.h"
+
 using namespace std;
 
 
+
+int wczytajInt(const string& tekst) {
+    int wartosc;
+    cout << tekst;
+    if (!(cin >> wartosc)) {
+        cin.clear();
+        cin.ignore(10000, '\n');
+        throw invalid_argument("Wprowadzono niepoprawna liczbe calkowita.");
+    }
+    cin.ignore(10000, '\n');
+    return wartosc;
+}
+
+string wczytajTekst(const string& tekst) {
+    string linia;
+    cout << tekst;
+    getline(cin, linia);
+    return linia;
+}
+
+double wczytajDouble(const string& tekst) {
+    string linia = wczytajTekst(tekst);
+    for (char& c : linia) {
+        if (c == ',') {
+            c = '.';
+        }
+    }
+    size_t ile = 0;
+    double wartosc = 0.0;
+    try {
+        wartosc = stod(linia, &ile);
+    } catch (const exception&) {
+        throw invalid_argument("Wprowadzono niepoprawna wartosc liczbowa.");
+    }
+    if (ile != linia.size()) {
+        throw invalid_argument("Wprowadzono niepoprawna wartosc liczbowa.");
+    }
+    return wartosc;
+}
+
 void czekajNaEnter() {
-    cout << "\nNacisnij Enter, aby wrocic do menu";
+    cout << "\nNacisnij Enter, aby wrocic do menu...";
     string pom;
     getline(cin, pom);
 }
 
-Trasa wczytajTraseKlienta() {
-    cout << "\nWybierz sposob wprowadzenia trasy:\n";
-    cout << "1. Glownie miasto (70% miasto / 30% trasa / 0% autostrada)\n";
-    cout << "2. Trasa mieszana (30% miasto / 50% trasa / 20% autostrada)\n";
-    cout << "3. Glownie autostrada (20% miasto / 20% trasa / 60% autostrada)\n";
-    cout << "4. Wlasny dokladny podzial kilometrow\n";
-    cout << "Wybor profilu: ";
-    int tryb;
-    cin >> tryb;
-    cin.ignore(10000, '\n');
+void dodajPojazdInteraktywnie(Wypozyczalnia& wypozyczalnia) {
+    wypozyczalnia.wyswietlFlote();
+    int id = wczytajInt("\nNadaj unikalne ID: ");
+    string marka = wczytajTekst("Marka (bez spacji): ");
+    string model = wczytajTekst("Model (uzyj _ zamiast spacji, np. Karoq_2.0): ");
+    double stawka = wczytajDouble("Stawka dobowa [PLN]: ");
+    double kaucja = wczytajDouble("Kaucja zwrotna [PLN]: ");
 
-
-
-    if (tryb >= 1 && tryb <= 3) {
-        double km;
-        int dni;
-        cout << "Podaj szacowany laczny dystans podrozy [km]: ";
-        cin >> km;
-        cout << "Podaj liczbe dni wynajmu: ";
-        cin >> dni;
-        cin.ignore(10000, '\n');
-        return Trasa(km, static_cast<ProfilTrasy>(tryb), dni);
+    int zasilanie = wczytajInt("Rodzaj zasilania (1 - Benzyna, 2 - Diesel, 3 - Elektryczny): ");
+    if (zasilanie < 1 || zasilanie > 3) {
+        throw invalid_argument("Niepoprawny wybor rodzaju zasilania.");
     }
 
+    double zM = wczytajDouble("Zuzycie miasto [l lub kWh / 100km]: ");
+    double zT = wczytajDouble("Zuzycie trasa [l lub kWh / 100km]: ");
+    double zA = wczytajDouble("Zuzycie autostrada [l lub kWh / 100km]: ");
 
-
-    double miasto, trasa, autostrada;
-    int dni;
-    cout << "Dystans w miescie [km]: ";
-    cin >> miasto;
-    cout << "Dystans w trasie [km]: ";
-    cin >> trasa;
-    cout << "Dystans na autostradzie [km]: ";
-    cin >> autostrada;
-    cout << "Podaj liczbe dni wynajmu: ";
-    cin >> dni;
-    cin.ignore(10000, '\n');
-    return Trasa(miasto, trasa, autostrada, dni);
+    if (zasilanie == 3) {
+        double bat = wczytajDouble("Pojemnosc baterii [kWh]: ");
+        wypozyczalnia.dodajPojazd(new PojazdElektryczny(id, marka, model, stawka, kaucja, zM, zT, zA, bat));
+    } else {
+        string paliwo = (zasilanie == 1) ? "Benzyna" : "Diesel";
+        wypozyczalnia.dodajPojazd(new PojazdSpalinowy(id, marka, model, stawka, kaucja, paliwo, zM, zT, zA));
+    }
+    cout << "Pojazd dodany i zapisany w bazie.\n";
 }
-
-
-
 
 int main() {
     cout << fixed;
     cout.precision(2);
 
-    Wypozyczalnia system("Wypozyczalnia ABC", "flota.txt");
-    int wybor = -1;
+    try {
+        Wypozyczalnia wypozyczalnia;
+        int wybor = -1;
 
-    while (wybor != 0) {
-        cout << "\n SYSTEM WYPOZYCZALNI\n";
-        cout << "1. Wyswietl stan floty\n";
-        cout << "2. Dobierz najtansze auto dla klienta\n";
-        cout << "3. Wydaj pojazd klientowi (wypozycz po ID)\n";
-        cout << "4. Przyjmij zwrot pojazdu (zwrot po ID)\n";
-        cout << "5. Dodaj nowy pojazd do floty\n";
-        cout << "6. Usun pojazd z floty\n";
-        cout << "7. Zaktualizuj cennik paliw i pradu\n";
-        cout << "0. Zakoncz prace\n";
-        cout << "Wybierz opcje: ";
-        cin >> wybor;
-        cin.ignore(10000, '\n');
+        while (wybor != 0 && cin) {
+            cout << "\nSystem pracownika wypozyczalni:\n";
+            cout << "1. Wyswietl stan floty\n";
+            cout << "2. Dobierz najtansze auto dla klienta\n";
+            cout << "3. Wydaj pojazd klientowi (wypozycz po ID)\n";
+            cout << "4. Przyjmij zwrot pojazdu (zwrot po ID)\n";
+            cout << "5. Dodaj nowy pojazd do floty\n";
+            cout << "6. Usun pojazd z floty\n";
+            cout << "7. Zaktualizuj cennik paliw i pradu\n";
+            cout << "0. Zakoncz prace\n";
 
-        switch (wybor) {
-            case 1:
-                system.wyswietlFlote();
-                czekajNaEnter();
-                break;
-            case 2: {
-                int pref;
-                cout << "\nPreferencja napedu (0 - Wszystkie, 1 - Spalinowe, 2 - Elektryczne): ";
-                cin >> pref;
-                cin.ignore(10000, '\n');
-                Trasa trasa = wczytajTraseKlienta();
-                system.dobierzAutoDlaKlienta(trasa, static_cast<TypNapedu>(pref));
-                czekajNaEnter();
-                break;
-            }
-            case 3: {
-                system.wyswietlKrotkaListe();
-                int id;
-                cout << "\nPodaj ID wydawanego pojazdu: ";
-                cin >> id;
-                cin.ignore(10000, '\n');
-                system.wypozyczPojazd(id);
-                czekajNaEnter();
-                break;
-            }
-            case 4: {
-                system.wyswietlWypozyczone();
-                int id;
-                cout << "\nPodaj ID zwracanego pojazdu (lub 0 aby anulowac): ";
-                cin >> id;
-                cin.ignore(10000, '\n');
-                if (id != 0) {
-                    system.zwrocPojazd(id);
+            try {
+                wybor = wczytajInt("Wybierz opcje: ");
+
+                switch (wybor) {
+                    case 1:
+                        wypozyczalnia.wyswietlFlote();
+                        czekajNaEnter();
+                        break;
+                    case 2: {
+                        int preferencja = wczytajInt("\nPreferencja napedu (0 - Wszystkie, 1 - Spalinowe, 2 - Elektryczne): ");
+                        cout << "\nProfil trasy:\n";
+                        cout << "1. Miasto (70% miasto / 30% trasa / 0% autostrada)\n";
+                        cout << "2. Ogolny (34% miasto / 33% trasa / 33% autostrada)\n";
+                        cout << "3. Miedzymiastowa (15% miasto / 35% trasa / 50% autostrada)\n";
+                        int profil = wczytajInt("Wybor profilu: ");
+                        double km = wczytajDouble("Szacowany dystans podrozy [km]: ");
+                        int dni = wczytajInt("Liczba dni wynajmu: ");
+
+                        Trasa trasa(km, profil, dni);
+                        wypozyczalnia.dobierzAutoDlaKlienta(trasa, preferencja);
+                        czekajNaEnter();
+                        break;
+                    }
+                    case 3: {
+                        wypozyczalnia.wyswietlFlote();
+                        int id = wczytajInt("\nPodaj ID wydawanego pojazdu: ");
+                        wypozyczalnia.wypozyczPojazd(id);
+                        cout << "Pojazd o ID " << id << " zostal wydany klientowi.\n";
+                        czekajNaEnter();
+                        break;
+                    }
+                    case 4: {
+                        wypozyczalnia.wyswietlWypozyczone();
+                        int id = wczytajInt("\nPodaj ID zwracanego pojazdu: ");
+                        wypozyczalnia.zwrocPojazd(id);
+                        cout << "Pojazd o ID " << id << " wrocil na plac.\n";
+                        czekajNaEnter();
+                        break;
+                    }
+                    case 5:
+                        dodajPojazdInteraktywnie(wypozyczalnia);
+                        czekajNaEnter();
+                        break;
+                    case 6: {
+                        wypozyczalnia.wyswietlFlote();
+                        int id = wczytajInt("\nPodaj ID pojazdu do usuniecia: ");
+                        wypozyczalnia.usunPojazd(id);
+                        cout << "Pojazd o ID " << id << " zostal usuniety z bazy.\n";
+                        czekajNaEnter();
+                        break;
+                    }
+                    case 7: {
+                        const Cennik& c = wypozyczalnia.getCennik();
+                        cout << "\nAktualne stawki -> Benzyna: " << c.getCenaBenzyny()
+                             << " PLN, Diesel: " << c.getCenaDiesla()
+                             << " PLN, Prad: " << c.getCenaPradu() << " PLN\n";
+                        double pb = wczytajDouble("Nowa cena benzyny [PLN/l]: ");
+                        double on = wczytajDouble("Nowa cena diesla [PLN/l]: ");
+                        double pr = wczytajDouble("Nowa cena pradu [PLN/kWh]: ");
+                        wypozyczalnia.aktualizujCennik(pb, on, pr);
+                        cout << "Cennik zostal zaktualizowany.\n";
+                        czekajNaEnter();
+                        break;
+                    }
+                    case 0:
+                        cout << "Zamykanie systemu.\n";
+                        break;
+                    default:
+                        cout << "Nieznana opcja menu.\n";
+                        czekajNaEnter();
+                        break;
                 }
+            } catch (const exception& e) {
+                cout << "\n[BLAD] " << e.what() << "\n";
                 czekajNaEnter();
-                break;
             }
-            case 5: {
-                int typ, id;
-                string marka, model;
-                double stawka;
-                cout << "\nTyp napedu (1 - Spalinowy, 2 - Elektryczny): ";
-                cin >> typ;
-                cin.ignore(10000, '\n');
-                system.wyswietlWolneId();
-                cout << "Nadaj unikalne ID: ";
-                cin >> id;
-                cin.ignore(10000, '\n');
-                cout << "Marka (bez spacji): ";
-                cin >> marka;
-                cin.ignore(10000, '\n');
-                cout << "Model (uzyj _ zamiast spacji, np. Karoq_2.0): ";
-                cin >> model;
-                cin.ignore(10000, '\n');
-                cout << "Stawka dobowa [PLN]: ";
-                cin >> stawka;
-                cin.ignore(10000, '\n');
-
-                if (typ == 1) {
-                    int wyborPaliwa;
-                    double sM, sT, sA;
-                    cout << "Rodzaj paliwa (1 - Benzyna, 2 - Diesel): ";
-                    cin >> wyborPaliwa;
-                    string paliwo = (wyborPaliwa == 2) ? "Diesel" : "Benzyna";
-                    cout << "Spalanie miasto [l/100km]: ";
-                    cin >> sM;
-                    cout << "Spalanie trasa [l/100km]: ";
-                    cin >> sT;
-                    cout << "Spalanie autostrada [l/100km]: ";
-                    cin >> sA;
-                    cin.ignore(10000, '\n');
-                    system.dodajPojazd(new PojazdSpalinowy(id, marka, model, stawka, paliwo, sM, sT, sA));
-                } else {
-                    double zM, zT, zA, bat;
-                    cout << "Zuzycie miasto [kWh/100km]: ";
-                    cin >> zM;
-                    cout << "Zuzycie trasa [kWh/100km]: ";
-                    cin >> zT;
-                    cout << "Zuzycie autostrada [kWh/100km]: ";
-                    cin >> zA;
-                    cout << "Pojemnosc baterii [kWh]: ";
-                    cin >> bat;
-                    cin.ignore(10000, '\n');
-                    system.dodajPojazd(new PojazdElektryczny(id, marka, model, stawka, zM, zT, zA, bat));
-                }
-                czekajNaEnter();
-                break;
-            }
-            case 6: {
-                system.wyswietlKrotkaListe();
-                int id;
-                cout << "\nPodaj ID pojazdu do usuniecia: ";
-                cin >> id;
-                cin.ignore(10000, '\n');
-                system.usunPojazd(id);
-                czekajNaEnter();
-                break;
-            }
-            case 7: {
-                Cennik& c = system.getCennik();
-                cout << "\nAktualne stawki -> Benzyna: " << c.getCenaBenzyny()
-                     << ", Diesel: " << c.getCenaDiesla()
-                     << ", Prad min: " << c.getCenaPraduMin()
-                     << ", Prad max: " << c.getCenaPraduMax() << "\n";
-                double pb, on, pMin, pMax;
-                cout << "Nowa cena benzyny [PLN/l]: ";
-                cin >> pb;
-                cout << "Nowa cena diesla [PLN/l]: ";
-                cin >> on;
-                cout << "Nowa minimalna cena pradu [PLN/kWh]: ";
-                cin >> pMin;
-                cout << "Nowa maksymalna cena pradu [PLN/kWh]: ";
-                cin >> pMax;
-                cin.ignore(10000, '\n');
-                c.ustawCeny(pb, on, pMin, pMax);
-                cout << "Cennik zaktualizowany.\n";
-                czekajNaEnter();
-                break;
-            }
-            case 0:
-                cout << "Zamykanie systemu.\n";
-                break;
-            default:
-                cout << "Nieznana opcja menu.\n";
-                czekajNaEnter();
-                break;
         }
+    } catch (const exception& e) {
+        cout << "\n[BLAD KRYTYCZNY] " << e.what() << "\n";
+        return 1;
     }
 
     return 0;

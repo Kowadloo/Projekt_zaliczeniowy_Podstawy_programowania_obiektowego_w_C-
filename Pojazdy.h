@@ -3,72 +3,65 @@
 #include <string>
 #include "DanePodrozy.h"
 
-using namespace std;
 
-
-
-
-enum class TypNapedu {
-    Wszystkie = 0,
-    Spalinowy = 1,
-    Elektryczny = 2
-};
-
-struct KosztEnergii {
-    double min;
-    double max;
-};
 
 class Pojazd {
 protected:
     int id;
-    string marka;
-    string model;
+    std::string marka;
+    std::string model;
     double stawkaDobowa;
+    double kaucja;
     bool wypozyczony;
 
+    virtual char getTypPliku() const = 0;
+    virtual void dopiszSzczegolyDoLinii(std::ostream& os) const = 0;
+
 public:
-    Pojazd();
-    Pojazd(int id, const string& marka, const string& model, double stawkaDobowa);
+    Pojazd(int id, const std::string& marka, const std::string& model, double stawkaDobowa, double kaucja);
     virtual ~Pojazd() = default;
 
     int getId() const;
-    string getMarka() const;
-    string getModel() const;
+    std::string getMarka() const;
+    std::string getModel() const;
     double getStawkaDobowa() const;
+    double getKaucja() const;
     bool isWypozyczony() const;
 
     void setWypozyczony(bool status);
 
-    virtual KosztEnergii obliczKosztEnergii(const Trasa& trasa, const Cennik& cennik) const = 0;
-    virtual string getOpisNapedu() const = 0;
-    virtual TypNapedu getTypNapedu() const = 0;
-    virtual string zapiszDoLinii() const = 0;
-    virtual void wypiszSzczegoly(ostream& os) const;
+    virtual double obliczKosztEnergii(const Trasa& trasa, const Cennik& cennik) const = 0;
+    virtual std::string getOpisNapedu() const = 0;
+    virtual int getKodNapedu() const = 0;
+    virtual std::string getDodatkoweInfoTrasy(const Trasa& trasa) const;
+    virtual void wypiszSzczegoly(std::ostream& os) const;
 
+    void zapiszDoPliku(std::ostream& os) const;
     bool operator==(const Pojazd& inny) const;
 };
 
-ostream& operator<<(ostream& os, const Pojazd& pojazd);
+std::ostream& operator<<(std::ostream& os, const Pojazd& pojazd);
 
 class PojazdSpalinowy : public Pojazd {
 private:
-    string rodzajPaliwa;
+    std::string rodzajPaliwa;
     double spalanieMiasto;
     double spalanieTrasa;
     double spalanieAutostrada;
 
+protected:
+    char getTypPliku() const override;
+    void dopiszSzczegolyDoLinii(std::ostream& os) const override;
+
 public:
-    PojazdSpalinowy();
-    PojazdSpalinowy(int id, const string& marka, const string& model, double stawkaDobowa,
-                    const string& rodzajPaliwa, double spalanieMiasto,
+    PojazdSpalinowy(int id, const std::string& marka, const std::string& model, double stawkaDobowa,
+                    double kaucja, const std::string& rodzajPaliwa, double spalanieMiasto,
                     double spalanieTrasa, double spalanieAutostrada);
 
-    KosztEnergii obliczKosztEnergii(const Trasa& trasa, const Cennik& cennik) const override;
-    string getOpisNapedu() const override;
-    TypNapedu getTypNapedu() const override;
-    string zapiszDoLinii() const override;
-    void wypiszSzczegoly(ostream& os) const override;
+    double obliczKosztEnergii(const Trasa& trasa, const Cennik& cennik) const override;
+    std::string getOpisNapedu() const override;
+    int getKodNapedu() const override;
+    void wypiszSzczegoly(std::ostream& os) const override;
 };
 
 class PojazdElektryczny : public Pojazd {
@@ -80,15 +73,18 @@ private:
 
     double obliczZuzyteKwh(const Trasa& trasa) const;
 
+protected:
+    char getTypPliku() const override;
+    void dopiszSzczegolyDoLinii(std::ostream& os) const override;
+
 public:
-    PojazdElektryczny();
-    PojazdElektryczny(int id, const string& marka, const string& model, double stawkaDobowa,
-                      double zuzycieMiasto, double zuzycieTrasa,
+    PojazdElektryczny(int id, const std::string& marka, const std::string& model, double stawkaDobowa,
+                      double kaucja, double zuzycieMiasto, double zuzycieTrasa,
                       double zuzycieAutostrada, double pojemnoscBaterii);
 
-    KosztEnergii obliczKosztEnergii(const Trasa& trasa, const Cennik& cennik) const override;
-    string getOpisNapedu() const override;
-    TypNapedu getTypNapedu() const override;
-    string zapiszDoLinii() const override;
-    void wypiszSzczegoly(ostream& os) const override;
+    double obliczKosztEnergii(const Trasa& trasa, const Cennik& cennik) const override;
+    std::string getOpisNapedu() const override;
+    int getKodNapedu() const override;
+    std::string getDodatkoweInfoTrasy(const Trasa& trasa) const override;
+    void wypiszSzczegoly(std::ostream& os) const override;
 };

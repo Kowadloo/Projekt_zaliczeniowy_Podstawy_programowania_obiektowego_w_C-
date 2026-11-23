@@ -1,60 +1,57 @@
 #include "DanePodrozy.h"
+#include <stdexcept>
+
 using namespace std;
 
+
+
 Cennik::Cennik()
-    : cenaBenzyny(6.50), cenaDiesla(6.65), cenaPraduMin(1.50), cenaPraduMax(3.50) {}
-
-Cennik::Cennik(double benzyna, double diesel, double pradMin, double pradMax) {
-    ustawCeny(benzyna, diesel, pradMin, pradMax);
-}
-
-
+    : cenaBenzyny(6.50), cenaDiesla(6.65), cenaPradu(2.50) {}
 
 double Cennik::getCenaBenzyny() const { return cenaBenzyny; }
 double Cennik::getCenaDiesla() const { return cenaDiesla; }
-double Cennik::getCenaPraduMin() const { return cenaPraduMin; }
-double Cennik::getCenaPraduMax() const { return cenaPraduMax; }
+double Cennik::getCenaPradu() const { return cenaPradu; }
 
-
-void Cennik::ustawCeny(double benzyna, double diesel, double pradMin, double pradMax) {
+void Cennik::ustawCeny(double benzyna, double diesel, double prad) {
+    if (benzyna <= 0.0 || diesel <= 0.0 || prad <= 0.0) {
+        throw invalid_argument("Wszystkie ceny paliw i pradu musza byc wieksze od zera.");
+    }
     cenaBenzyny = benzyna;
     cenaDiesla = diesel;
-    cenaPraduMin = pradMin;
-    cenaPraduMax = pradMax;
+    cenaPradu = prad;
 }
 
-Trasa::Trasa()
-    : dystansMiasto(0.0), dystansTrasa(0.0), dystansAutostrada(0.0), liczbaDni(1) {}
+Trasa::Trasa(double calkowityDystans, int profilTrasy, int dni) {
+    if (calkowityDystans <= 0.0) {
+        throw invalid_argument("Calkowity dystans musi byc wiekszy od zera.");
+    }
+    if (dni < 1) {
+        throw invalid_argument("Liczba dni wynajmu musi wynosic co najmniej 1.");
+    }
+    liczbaDni = dni;
 
-Trasa::Trasa(double miasto, double trasa, double autostrada, int dni)
-    : dystansMiasto(miasto), dystansTrasa(trasa), dystansAutostrada(autostrada), liczbaDni(dni) {}
-
-Trasa::Trasa(double calkowityDystans, ProfilTrasy profil, int dni)
-    : dystansMiasto(0.0), dystansTrasa(0.0), dystansAutostrada(0.0), liczbaDni(dni) {
-    if (profil == ProfilTrasy::Miasto) {
+    if (profilTrasy == 1) {
         dystansMiasto = calkowityDystans * 0.70;
         dystansTrasa = calkowityDystans * 0.30;
         dystansAutostrada = 0.0;
-    } else if (profil == ProfilTrasy::Mieszana) {
-        dystansMiasto = calkowityDystans * 0.30;
-        dystansTrasa = calkowityDystans * 0.50;
-        dystansAutostrada = calkowityDystans * 0.20;
-    } else if (profil == ProfilTrasy::Autostrada) {
-        dystansMiasto = calkowityDystans * 0.20;
-        dystansTrasa = calkowityDystans * 0.20;
-        dystansAutostrada = calkowityDystans * 0.60;
+    } else if (profilTrasy == 2) {
+        dystansMiasto = calkowityDystans * 0.34;
+        dystansTrasa = calkowityDystans * 0.33;
+        dystansAutostrada = calkowityDystans * 0.33;
+    } else if (profilTrasy == 3) {
+        dystansMiasto = calkowityDystans * 0.15;
+        dystansTrasa = calkowityDystans * 0.35;
+        dystansAutostrada = calkowityDystans * 0.50;
+    } else {
+        throw invalid_argument("Wybrano niepoprawny profil trasy.");
     }
 }
-
-
 
 double Trasa::getDystansMiasto() const { return dystansMiasto; }
 double Trasa::getDystansTrasa() const { return dystansTrasa; }
 double Trasa::getDystansAutostrada() const { return dystansAutostrada; }
 double Trasa::getDystansCalkowity() const { return dystansMiasto + dystansTrasa + dystansAutostrada; }
 int Trasa::getLiczbaDni() const { return liczbaDni; }
-
-
 
 ostream& operator<<(ostream& os, const Trasa& trasa) {
     os << "Trasa (" << trasa.getLiczbaDni() << " dni, " << trasa.getDystansCalkowity() << " km) | "
